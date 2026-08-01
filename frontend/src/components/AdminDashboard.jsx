@@ -28,7 +28,8 @@ export default function AdminDashboard({
   onOpenApproveModal,
   onRejectRequest,
   onSelectRequestDetails,
-  onResetDemoData
+  onResetDemoData,
+  user
 }) {
   // Main Sub-Tabs: 'requests' | 'audit-logs' | 'pass-validity'
   const [activeSubTab, setActiveSubTab] = useState('requests')
