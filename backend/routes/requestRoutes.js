@@ -6,18 +6,18 @@ const liveLogsStore = []
 
 const router = express.Router()
 
-// DELETE /api/requests/wipe-all - Wipe out all old test data from MongoDB
+// DELETE /api/requests/wipe-all - Wipe out all old test data
 router.delete('/wipe-all', async (req, res) => {
+  liveRequestsStore.length = 0
+  liveLogsStore.length = 0
   try {
     await VisitorRequest.deleteMany({})
     await GateLog.deleteMany({})
-    liveRequestsStore.length = 0
-    liveLogsStore.length = 0
-    console.log('🧹 Wiped all old visitor requests & gate logs from MongoDB!')
-    return res.json({ message: 'All old visitor data successfully deleted.' })
   } catch (err) {
-    return res.status(500).json({ error: err.message })
+    console.warn('MongoDB wipe skipped:', err.message)
   }
+  console.log('🧹 Wiped all old visitor requests & gate logs!')
+  return res.json({ message: 'All old visitor data successfully deleted.' })
 })
 
 // GET /api/requests - Get all requests (or filtered by email/role)
@@ -169,7 +169,7 @@ router.patch('/:id/approve', async (req, res) => {
     console.warn('MongoDB approve fallback:', err.message)
   }
 
-  const reqObj = fallbackRequests.find((r) => r.id.toLowerCase() === id.toLowerCase())
+  const reqObj = liveRequestsStore.find((r) => r.id.toLowerCase() === id.toLowerCase())
   if (!reqObj) return res.status(404).json({ error: 'Request not found.' })
 
   reqObj.status = 'Approved'
@@ -193,7 +193,7 @@ router.patch('/:id/reject', async (req, res) => {
     console.warn('MongoDB reject fallback:', err.message)
   }
 
-  const reqObj = fallbackRequests.find((r) => r.id.toLowerCase() === id.toLowerCase())
+  const reqObj = liveRequestsStore.find((r) => r.id.toLowerCase() === id.toLowerCase())
   if (!reqObj) return res.status(404).json({ error: 'Request not found.' })
 
   reqObj.status = 'Rejected'
@@ -233,7 +233,7 @@ router.post('/:id/check-in', async (req, res) => {
     console.warn('MongoDB check-in fallback:', err.message)
   }
 
-  const reqObj = fallbackRequests.find((r) => r.id.toLowerCase() === id.toLowerCase())
+  const reqObj = liveRequestsStore.find((r) => r.id.toLowerCase() === id.toLowerCase())
   if (!reqObj) return res.status(404).json({ error: 'Request not found.' })
 
   reqObj.status = 'Checked-In'
@@ -285,7 +285,7 @@ router.post('/:id/check-out', async (req, res) => {
     console.warn('MongoDB check-out fallback:', err.message)
   }
 
-  const reqObj = fallbackRequests.find((r) => r.id.toLowerCase() === id.toLowerCase())
+  const reqObj = liveRequestsStore.find((r) => r.id.toLowerCase() === id.toLowerCase())
   if (!reqObj) return res.status(404).json({ error: 'Request not found.' })
 
   const inTime = new Date(reqObj.checkInTime || timestamp)
@@ -301,17 +301,6 @@ router.post('/:id/check-out', async (req, res) => {
   reqObj.checkedOutBy = officer
   reqObj.durationMinutes = durationMinutes
   return res.json({ message: 'Visitor checked out successfully.', request: reqObj })
-})
-
-// POST /api/requests/reset - Reset Demo Data
-router.post('/reset', async (req, res) => {
-  try {
-    await VisitorRequest.deleteMany({})
-    await VisitorRequest.insertMany(fallbackRequests)
-    return res.json({ message: 'Demo data reloaded to MongoDB.', requests: fallbackRequests })
-  } catch (err) {
-    return res.json({ message: 'Demo data reset locally.', requests: fallbackRequests })
-  }
 })
 
 export default router

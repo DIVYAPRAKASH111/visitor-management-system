@@ -16,8 +16,7 @@ import {
 export default function MyRequestsList({
   requests,
   onSelectRequest,
-  onNewRequest,
-  onResetDemoData
+  onNewRequest
 }) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('All')
@@ -76,15 +75,6 @@ export default function MyRequestsList({
           </p>
         </div>
 
-        {requests.length === 0 && (
-          <button
-            type="button"
-            onClick={onResetDemoData}
-            className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-3 py-2 rounded-xl border border-indigo-500/20 cursor-pointer self-start sm:self-auto"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Load Sample Data
-          </button>
-        )}
       </div>
 
       {/* Filter & Search Bar */}

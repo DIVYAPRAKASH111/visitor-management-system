@@ -4,8 +4,8 @@ import { API_BASE_URL } from '../config'
 
 export default function AuthCard({ onLoginSuccess }) {
   const [isRegisterMode, setIsRegisterMode] = useState(false)
-  const [email, setEmail] = useState('visitor@example.com')
-  const [password, setPassword] = useState('visitor123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [name, setName] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
@@ -118,8 +118,8 @@ export default function AuthCard({ onLoginSuccess }) {
   // STANDARD GOOGLE AUTHENTICATION FLOW
   const handleGoogleSignIn = async () => {
     let promptMail = email
-    if (!promptMail || promptMail === 'visitor@example.com') {
-      promptMail = window.prompt('Sign in with Google - Enter your Google Account email:', 'admin1@gmail.com')
+    if (!promptMail) {
+      promptMail = window.prompt('Sign in with Google - Enter your Google Account email:', '')
     }
 
     if (!promptMail) return

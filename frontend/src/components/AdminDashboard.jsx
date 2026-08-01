@@ -28,7 +28,6 @@ export default function AdminDashboard({
   onOpenApproveModal,
   onRejectRequest,
   onSelectRequestDetails,
-  onResetDemoData,
   user = {}
 }) {
   const currentUser = user || {}
@@ -46,53 +45,50 @@ export default function AdminDashboard({
     return itemDate === dateFilter
   }
 
+  // Helper null-safe search matcher
+  const matchesSearchTerm = (req) => {
+    if (!req) return false
+    const s = (searchTerm || '').toLowerCase()
+    if (!s) return true
+
+    const vName = (req.visitorName || '').toLowerCase()
+    const hName = (req.host || '').toLowerCase()
+    const sName = (req.studentName || '').toLowerCase()
+    const rId = (req.id || '').toLowerCase()
+    const dept = (req.hostDepartment || '').toLowerCase()
+
+    return (
+      vName.includes(s) ||
+      hName.includes(s) ||
+      sName.includes(s) ||
+      rId.includes(s) ||
+      dept.includes(s)
+    )
+  }
+
   // Filter 1: Visit Requests Table (ONLY Approved, Rejected, and Pending)
-  const visitRequestRecords = requests
-    .filter((r) => ['Pending', 'Approved', 'Rejected'].includes(r.status))
+  const visitRequestRecords = (requests || [])
+    .filter((r) => r && ['Pending', 'Approved', 'Rejected'].includes(r.status))
     .filter((r) => matchesDateFilter(r.date))
 
   const filteredRequests = visitRequestRecords.filter((req) => {
-    const matchesSearch =
-      req.visitorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.host.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.studentName && req.studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      req.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.hostDepartment.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesStatus =
-      statusFilter === 'All' || req.status === statusFilter
-
+    const matchesSearch = matchesSearchTerm(req)
+    const matchesStatus = statusFilter === 'All' || req.status === statusFilter
     return matchesSearch && matchesStatus
   })
 
   // Filter 2: Entry & Exit Audit Logs (ONLY Checked-In and Checked-Out)
-  const entryExitRecords = requests
-    .filter((r) => ['Checked-In', 'Checked-Out'].includes(r.status))
+  const entryExitRecords = (requests || [])
+    .filter((r) => r && ['Checked-In', 'Checked-Out'].includes(r.status))
     .filter((r) => matchesDateFilter(r.date))
-    .filter((req) => {
-      return (
-        req.visitorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.host.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.studentName && req.studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        req.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.hostDepartment.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    })
+    .filter(matchesSearchTerm)
 
   // Filter 3: Approved Passes List (ONLY Passes Approved by Admin)
-  const approvedPassesOnly = requests
-    .filter((r) => r.status === 'Approved' || r.status === 'Checked-In' || r.status === 'Checked-Out')
+  const approvedPassesOnly = (requests || [])
+    .filter((r) => r && (r.status === 'Approved' || r.status === 'Checked-In' || r.status === 'Checked-Out'))
     .filter((r) => matchesDateFilter(r.date))
 
-  const filteredApprovedPasses = approvedPassesOnly.filter((req) => {
-    return (
-      req.visitorName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.host.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (req.studentName && req.studentName.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      req.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      req.hostDepartment.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  })
+  const filteredApprovedPasses = approvedPassesOnly.filter(matchesSearchTerm)
 
   // Live Pass Expiry Calculation Helper
   const calculatePassValidityStatus = (req) => {
@@ -240,32 +236,9 @@ export default function AdminDashboard({
       {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
-              Campus Administration Management
-            </span>
-            {currentUser?.name && (
-              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                Logged in as {currentUser.name} ({currentUser.email})
-              </span>
-            )}
-          </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight mt-1">
             System Administration & Analytics
           </h2>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-3">
-          {requests.length === 0 && (
-            <button
-              type="button"
-              onClick={onResetDemoData}
-              className="flex items-center gap-1.5 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 px-3 py-2 rounded-xl border border-indigo-500/20 cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" /> Reset Demo
-            </button>
-          )}
         </div>
       </div>
 

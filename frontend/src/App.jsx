@@ -9,6 +9,45 @@ import VisitorPassModal from './components/VisitorPassModal'
 import ApproveRequestModal from './components/ApproveRequestModal'
 import { API_BASE_URL } from './config'
 
+// Error Boundary Guard to prevent dark blank screens on uncaught errors
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 max-w-lg mx-auto mt-20 text-center bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl text-white">
+          <h2 className="text-xl font-bold text-rose-400 mb-2">Something went wrong</h2>
+          <p className="text-sm text-slate-400 mb-6">
+            {this.state.error?.message || 'An unexpected error occurred.'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null })
+              window.location.reload()
+            }}
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm rounded-xl cursor-pointer"
+          >
+            Reload Dashboard
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 // Initial Requests List (Clean, Populated by Live Registration)
 const initialRequestsFallback = []
 
@@ -402,46 +441,46 @@ export default function App() {
 
 
 
-      {/* Main Content Body - Strictly Render View per Recognized Role */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 z-10">
-        {user?.role === 'visitor' && (
-          activeTab === 'new-request' ? (
-            <NewVisitRequestForm
-              onSubmitSuccess={handleCreateNewRequest}
-              onCancel={() => setActiveTab('requests')}
-            />
-          ) : (
-            <MyRequestsList
+      {/* Main Content Body - Wrapped in ErrorBoundary */}
+      <ErrorBoundary>
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-8 py-8 z-10">
+          {(user?.role?.toLowerCase() === 'admin') && (
+            <AdminDashboard
               requests={requests}
-              onSelectRequest={(req) => setSelectedRequest(req)}
-              onNewRequest={() => setActiveTab('new-request')}
-              onResetDemoData={handleResetDemoData}
+              onOpenApproveModal={(req) => setApproveModalRequest(req)}
+              onRejectRequest={handleRejectRequest}
+              onSelectRequestDetails={(req) => setSelectedRequest(req)}
+              user={user}
             />
-          )
-        )}
+          )}
 
-        {user?.role === 'security' && (
-          <SecurityScannerDashboard
-            requests={requests}
-            onCheckIn={handleCheckIn}
-            onCheckOut={handleCheckOut}
-            onSelectRequestDetails={(req) => setSelectedRequest(req)}
-            user={user}
-            onBack={handleLogout}
-          />
-        )}
+          {(user?.role?.toLowerCase() === 'security') && (
+            <SecurityScannerDashboard
+              requests={requests}
+              onCheckIn={handleCheckIn}
+              onCheckOut={handleCheckOut}
+              onSelectRequestDetails={(req) => setSelectedRequest(req)}
+              user={user}
+              onBack={handleLogout}
+            />
+          )}
 
-        {user?.role === 'admin' && (
-          <AdminDashboard
-            requests={requests}
-            onOpenApproveModal={(req) => setApproveModalRequest(req)}
-            onRejectRequest={handleRejectRequest}
-            onSelectRequestDetails={(req) => setSelectedRequest(req)}
-            onResetDemoData={handleResetDemoData}
-            user={user}
-          />
-        )}
-      </main>
+          {(user?.role?.toLowerCase() === 'visitor' || (!['admin', 'security'].includes(user?.role?.toLowerCase() || ''))) && (
+            activeTab === 'new-request' ? (
+              <NewVisitRequestForm
+                onSubmitSuccess={handleCreateNewRequest}
+                onCancel={() => setActiveTab('requests')}
+              />
+            ) : (
+              <MyRequestsList
+                requests={requests}
+                onSelectRequest={(req) => setSelectedRequest(req)}
+                onNewRequest={() => setActiveTab('new-request')}
+              />
+            )
+          )}
+        </main>
+      </ErrorBoundary>
 
       {/* Expanded Details & Digital QR Pass Modal */}
       {selectedRequest && (

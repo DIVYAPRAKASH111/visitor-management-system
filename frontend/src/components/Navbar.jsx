@@ -26,14 +26,15 @@ export default function Navbar({ activeTab, setActiveTab, user, onLogout, notifi
   }
 
   // FILTER NOTIFICATIONS: STRICTLY TARGETED TO THIS LOGGED IN USER'S ROLE & EMAIL
-  const userNotifications = notifications.filter((n) => {
+  const userNotifications = (notifications || []).filter((n) => {
+    if (!n || !n.id) return false
     if (dismissedNotifIds.includes(n.id)) return false
     // If targeted to a specific user email, match this logged in user's email
-    if (n.targetEmail && userEmail && n.targetEmail !== userEmail) {
+    if (n.targetEmail && userEmail && n.targetEmail.toLowerCase() !== userEmail) {
       return false
     }
     // If targeted to a specific role, match this logged in user's role
-    if (n.targetRole && n.targetRole !== userRole) {
+    if (n.targetRole && n.targetRole.toLowerCase() !== userRole.toLowerCase()) {
       return false
     }
     return true
