@@ -24,13 +24,14 @@ import {
 import CustomDatePicker from './CustomDatePicker'
 
 export default function AdminDashboard({
-  requests,
+  requests = [],
   onOpenApproveModal,
   onRejectRequest,
   onSelectRequestDetails,
   onResetDemoData,
-  user
+  user = {}
 }) {
+  const currentUser = user || {}
   // Main Sub-Tabs: 'requests' | 'audit-logs' | 'pass-validity'
   const [activeSubTab, setActiveSubTab] = useState('requests')
   const [searchTerm, setSearchTerm] = useState('')
@@ -243,9 +244,9 @@ export default function AdminDashboard({
             <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-md border border-indigo-500/20">
               Campus Administration Management
             </span>
-            {user?.name && (
+            {currentUser?.name && (
               <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20">
-                Logged in as {user.name} ({user.email})
+                Logged in as {currentUser.name} ({currentUser.email})
               </span>
             )}
           </div>

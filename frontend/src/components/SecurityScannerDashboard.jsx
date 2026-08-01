@@ -22,13 +22,14 @@ import {
 } from 'lucide-react'
 
 export default function SecurityScannerDashboard({
-  requests,
+  requests = [],
   onCheckIn,
   onCheckOut,
   onSelectRequestDetails,
-  user,
+  user = {},
   onBack
 }) {
+  const currentUser = user || {}
   const [isScannerOpen, setIsScannerOpen] = useState(false)
   const [showOtpInput, setShowOtpInput] = useState(false)
   const [otpInput, setOtpInput] = useState('')
