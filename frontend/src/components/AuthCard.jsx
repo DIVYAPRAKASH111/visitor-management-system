@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Mail, Lock, Eye, EyeOff, Check, User } from 'lucide-react'
+import { API_BASE_URL } from '../config'
 
 export default function AuthCard({ onLoginSuccess }) {
   const [isRegisterMode, setIsRegisterMode] = useState(false)
@@ -11,24 +12,51 @@ export default function AuthCard({ onLoginSuccess }) {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
+  // Helper mapping for accounts
+  const resolveLocalUserAccount = (inputEmail) => {
+    const clean = inputEmail.toLowerCase().trim()
+
+    if (clean === 'admin1@gmail.com') return { id: 'USR-ADMIN-1', name: 'Prakash', role: 'admin', email: clean }
+    if (clean === 'admin2@gmail.com') return { id: 'USR-ADMIN-2', name: 'Gobi', role: 'admin', email: clean }
+    if (clean === 'admin3@gmail.com') return { id: 'USR-ADMIN-3', name: 'Abhi', role: 'admin', email: clean }
+    if (clean === 'admin@campus.edu') return { id: 'USR-ADMIN-MAIN', name: 'Alex Johnson', role: 'admin', email: clean }
+
+    if (clean === 'security1@gmail.com') return { id: 'USR-SEC-1', name: 'Ram', role: 'security', gate: 'Gate 1 / Main Entrance', email: clean }
+    if (clean === 'security2@gmail.com') return { id: 'USR-SEC-2', name: 'Dobby', role: 'security', gate: 'Gate 2 / North Entrance', email: clean }
+    if (clean === 'security3@gmail.com') return { id: 'USR-SEC-3', name: 'Jap', role: 'security', gate: 'Gate 3 / South Entrance', email: clean }
+    if (clean === 'officer@campus.edu') return { id: 'USR-SEC-MAIN', name: 'Officer Marcus Vance', role: 'security', gate: 'Gate 1 / Main Entrance', email: clean }
+
+    if (clean.includes('admin')) return { id: 'USR-ADMIN-GEN', name: 'Campus Admin', role: 'admin', email: clean }
+    if (clean.includes('security') || clean.includes('officer')) return { id: 'USR-SEC-GEN', name: 'Security Officer', role: 'security', gate: 'Gate 1 / Main Entrance', email: clean }
+
+    return { id: `USR-VISITOR-${Math.floor(1000 + Math.random() * 9000)}`, name: name || clean.split('@')[0], role: 'visitor', email: clean }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsLoading(true)
     setErrorMsg('')
 
+    const cleanEmail = email.toLowerCase().trim()
+
     if (isRegisterMode) {
       // Registration Flow (Strictly Visitor Role)
       try {
-        const response = await fetch('http://localhost:5000/api/auth/register', {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: name || email.split('@')[0],
-            email,
+            name: name || cleanEmail.split('@')[0],
+            email: cleanEmail,
             password,
             role: 'visitor',
           }),
+          signal: controller.signal
         })
+        clearTimeout(timeoutId)
 
         if (response.ok) {
           const data = await response.json()
@@ -42,28 +70,27 @@ export default function AuthCard({ onLoginSuccess }) {
           return
         }
       } catch (err) {
-        console.warn('Backend offline, using fallback registration:', err)
+        console.warn('Backend unavailable, executing registration locally:', err)
       }
 
       // Fallback local registration
       setTimeout(() => {
         setIsLoading(false)
-        onLoginSuccess({
-          id: `USR-${Math.floor(1000 + Math.random() * 9000)}`,
-          name: name || email.split('@')[0],
-          email,
-          role: 'visitor',
-          title: 'Registered Visitor',
-        })
-      }, 600)
+        onLoginSuccess(resolveLocalUserAccount(cleanEmail))
+      }, 400)
     } else {
       // Login Flow - Database automatically recognizes role from user email!
       try {
-        const response = await fetch('http://localhost:5000/api/auth/login', {
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ email: cleanEmail, password }),
+          signal: controller.signal
         })
+        clearTimeout(timeoutId)
 
         if (response.ok) {
           const data = await response.json()
@@ -77,55 +104,44 @@ export default function AuthCard({ onLoginSuccess }) {
           return
         }
       } catch (err) {
-        console.warn('Backend offline, using local auto role lookup:', err)
+        console.warn('Backend unavailable, executing login fallback:', err)
       }
 
       // Local fallback auto-role lookup
       setTimeout(() => {
         setIsLoading(false)
-        let autoRole = 'visitor'
-        let autoName = 'Michael Scott'
-
-        if (email.toLowerCase().includes('admin')) {
-          autoRole = 'admin'
-          autoName = 'Alex Johnson'
-        } else if (email.toLowerCase().includes('security') || email.toLowerCase().includes('officer')) {
-          autoRole = 'security'
-          autoName = 'Marcus Vance'
-        }
-
-        onLoginSuccess({
-          id: `USR-${autoRole.toUpperCase()}`,
-          name: autoName,
-          email,
-          role: autoRole,
-        })
-      }, 600)
+        onLoginSuccess(resolveLocalUserAccount(cleanEmail))
+      }, 400)
     }
   }
 
   // STANDARD GOOGLE AUTHENTICATION FLOW
   const handleGoogleSignIn = async () => {
-    // Prompt or use entered email for Google Account authentication
     let promptMail = email
     if (!promptMail || promptMail === 'visitor@example.com') {
-      promptMail = window.prompt('Sign in with Google - Enter your Google Account email:', 'admin@campus.edu')
+      promptMail = window.prompt('Sign in with Google - Enter your Google Account email:', 'admin1@gmail.com')
     }
 
     if (!promptMail) return
 
     setIsLoading(true)
     setErrorMsg('')
+    const cleanMail = promptMail.toLowerCase().trim()
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/google', {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 3000)
+
+      const response = await fetch(`${API_BASE_URL}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: promptMail,
-          name: promptMail.split('@')[0].replace('.', ' '),
+          email: cleanMail,
+          name: cleanMail.split('@')[0].replace('.', ' '),
         }),
+        signal: controller.signal
       })
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         const data = await response.json()
@@ -140,25 +156,8 @@ export default function AuthCard({ onLoginSuccess }) {
     // Local fallback for Google login
     setTimeout(() => {
       setIsLoading(false)
-      const cleanMail = promptMail.toLowerCase()
-      let autoRole = 'visitor'
-      let autoName = 'Pam Beesly'
-
-      if (cleanMail.includes('admin')) {
-        autoRole = 'admin'
-        autoName = 'Admin Portal'
-      } else if (cleanMail.includes('security') || cleanMail.includes('officer')) {
-        autoRole = 'security'
-        autoName = 'Officer Marcus Vance'
-      }
-
-      onLoginSuccess({
-        id: `USR-GOOGLE-${autoRole.toUpperCase()}`,
-        name: autoName,
-        email: promptMail,
-        role: autoRole,
-      })
-    }, 600)
+      onLoginSuccess(resolveLocalUserAccount(cleanMail))
+    }, 400)
   }
 
   return (

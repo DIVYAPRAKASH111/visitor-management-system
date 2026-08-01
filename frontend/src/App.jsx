@@ -7,6 +7,7 @@ import SecurityScannerDashboard from './components/SecurityScannerDashboard'
 import AdminDashboard from './components/AdminDashboard'
 import VisitorPassModal from './components/VisitorPassModal'
 import ApproveRequestModal from './components/ApproveRequestModal'
+import { API_BASE_URL } from './config'
 
 // Initial Requests List (Clean, Populated by Live Registration)
 const initialRequestsFallback = []
@@ -63,7 +64,7 @@ export default function App() {
       const u = currentUser || user
       const roleParam = u?.role || 'visitor'
       const emailParam = u?.email || ''
-      const res = await fetch(`http://localhost:5000/api/requests?role=${roleParam}&email=${encodeURIComponent(emailParam)}`)
+      const res = await fetch(`${API_BASE_URL}/api/requests?role=${roleParam}&email=${encodeURIComponent(emailParam)}`)
       if (res.ok) {
         const data = await res.json()
         setRequests(data)
@@ -120,7 +121,7 @@ export default function App() {
   const handleCreateNewRequest = async (newRequestData) => {
     let createdReq = null
     try {
-      const res = await fetch('http://localhost:5000/api/requests', {
+      const res = await fetch(`${API_BASE_URL}/api/requests`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newRequestData),
@@ -170,7 +171,7 @@ export default function App() {
     const targetReq = requests.find((r) => r.id === requestId)
 
     try {
-      const res = await fetch(`http://localhost:5000/api/requests/${requestId}/approve`, {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${requestId}/approve`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ timestamp, passPin }),
@@ -218,7 +219,7 @@ export default function App() {
     const targetReq = requests.find((r) => r.id === requestId)
 
     try {
-      const res = await fetch(`http://localhost:5000/api/requests/${requestId}/reject`, {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${requestId}/reject`, {
         method: 'PATCH',
       })
       if (res.ok) {
@@ -259,7 +260,7 @@ export default function App() {
     const timestamp = new Date().toLocaleString()
 
     try {
-      const res = await fetch(`http://localhost:5000/api/requests/${requestId}/check-in`, {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${requestId}/check-in`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ officerName }),
@@ -308,7 +309,7 @@ export default function App() {
     const timestamp = new Date().toLocaleString()
 
     try {
-      const res = await fetch(`http://localhost:5000/api/requests/${requestId}/check-out`, {
+      const res = await fetch(`${API_BASE_URL}/api/requests/${requestId}/check-out`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ officerName }),
@@ -437,6 +438,7 @@ export default function App() {
             onRejectRequest={handleRejectRequest}
             onSelectRequestDetails={(req) => setSelectedRequest(req)}
             onResetDemoData={handleResetDemoData}
+            user={user}
           />
         )}
       </main>
