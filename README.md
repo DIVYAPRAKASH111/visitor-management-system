@@ -1,6 +1,8 @@
 # 🛡️ VisiPass - Smart Campus Visitor Management & Gate Access Control System
 
 > **Hackathon Submission Project** | A full-stack, role-isolated campus visitor gate pass authorization, real-time webcam scanning, 6-digit OTP verification, and automated audit logging platform.
+> 
+> 📖 **[Read Full Project & Architecture Documentation (DOCUMENTATION.md)](./DOCUMENTATION.md)**
 
 ---
 
